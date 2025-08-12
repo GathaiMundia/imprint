@@ -1,0 +1,9 @@
+# .streamlit/config.toml
+
+[theme]
+# A futuristic dark theme
+primaryColor="#00A9FF"
+backgroundColor="#040D12"
+secondaryBackgroundColor="#092635"
+textColor="#ECF2FF"
+font="sans serif"
