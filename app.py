@@ -1,10 +1,10 @@
-# app.py (version without rotation)
+# app.py
 
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import io
 
-# --- PAGE CONFIGURATION ---
+# --- PAGE CONFIGURATION & META TAGS ---
 st.set_page_config(
     page_title="Imprint Generator",
     page_icon="🖼️",
@@ -12,9 +12,25 @@ st.set_page_config(
     initial_sidebar_state="auto"
 )
 
-# --- ADVANCED UI/UX STYLING ---
-def apply_custom_styling():
-    st.markdown("""
+def set_page_head():
+    """
+    Injects custom CSS for styling and meta tags for rich link previews.
+    """
+    
+    # --- YOUR PREVIEW DETAILS (NOW UPDATED) ---
+    app_url = "https://gathaimundia-imprint.streamlit.app"  # A likely URL for your app
+    image_url = "https://raw.githubusercontent.com/GathaiMundia/imprint/main/Attending%202025.png" 
+    # --- END OF YOUR DETAILS ---
+
+    meta_tags = f"""
+        <meta property="og:title" content="Imprint Generator | HOPAK Symposium">
+        <meta property="og:description" content="Create your personalized poster for the 20th Annual HOPAK Symposium. Upload a photo, add your name, and download your custom design.">
+        <meta property="og:image" content="{image_url}">
+        <meta property="og:url" content="{app_url}">
+        <meta name="twitter:card" content="summary_large_image">
+    """
+
+    css_styles = """
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Lexend+Deca&display=swap');
         
@@ -47,22 +63,28 @@ def apply_custom_styling():
             transform: translateY(-2px);
         }
         </style>
-    """, unsafe_allow_html=True)
+    """
+    
+    st.markdown(meta_tags + css_styles, unsafe_allow_html=True)
 
-apply_custom_styling()
+# Apply the styling and meta tags at the start of the app
+set_page_head()
 
 # --- FILE AND CONFIGURATION CONSTANTS ---
 POSTER_PATH = "Attending 2025.png"
 FONT_PATH = "PhotographSignature.ttf"
 
 # --- CORE IMAGE PROCESSING FUNCTION ---
-def create_poster(user_image_file, user_name, photo_scale, photo_pos_x, photo_pos_y, name_font_size):
+def create_poster(user_image_file, user_name, photo_scale, photo_pos_x, photo_pos_y, photo_rotation, name_font_size):
     poster_template = Image.open(POSTER_PATH).convert("RGBA")
     user_photo = Image.open(user_image_file)
     user_photo = ImageOps.exif_transpose(user_photo)
     user_photo = user_photo.convert("RGBA")
     
     canvas = Image.new("RGBA", poster_template.size)
+    
+    if photo_rotation != 0:
+        user_photo = user_photo.rotate(photo_rotation, resample=Image.Resampling.BICUBIC, expand=True)
     
     base_photo_width = 530
     aspect_ratio = user_photo.height / user_photo.width
@@ -84,7 +106,6 @@ def create_poster(user_image_file, user_name, photo_scale, photo_pos_x, photo_po
         font = ImageFont.load_default(size=60)
     
     draw.text((540, 870), user_name, font=font, fill="#000000", anchor="ms")
-
     return canvas
 
 # --- STREAMLIT APP LAYOUT ---
@@ -101,6 +122,7 @@ with st.sidebar:
     photo_scale = st.number_input("Zoom Photo", min_value=0.5, max_value=4.0, value=1.0, step=0.1)
     photo_pos_x = st.number_input("Move Photo Left/Right", min_value=-400, max_value=400, value=150, step=10)
     photo_pos_y = st.number_input("Move Photo Up/Down", min_value=-400, max_value=400, value=0, step=10)
+    photo_rotation = st.number_input("Rotate Photo (°)", min_value=0, max_value=360, value=0, step=5)
 
     st.header("3. Name Controls")
     name_font_size = st.number_input("Font Size", min_value=40, max_value=200, value=100, step=5)
@@ -113,6 +135,7 @@ if user_upload and user_name:
         photo_scale=photo_scale,
         photo_pos_x=photo_pos_x,
         photo_pos_y=photo_pos_y,
+        photo_rotation=photo_rotation,
         name_font_size=name_font_size
     )
     
