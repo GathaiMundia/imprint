@@ -1,7 +1,7 @@
 # app.py
 
 import streamlit as st
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 import io
 
 # --- PAGE CONFIGURATION ---
@@ -21,6 +21,8 @@ def apply_custom_styling():
         html, body, [class*="st-"], .st-emotion-cache-16txtl3 {
             font-family: 'Lexend Deca', sans-serif;
         }
+
+        /* Style for all input widgets for high contrast */
         .st-emotion-cache-1j6s6b6, .st-emotion-cache-1x0xh3b {
             background-color: #ECF2FF;
             border-radius: 8px;
@@ -29,6 +31,8 @@ def apply_custom_styling():
             color: #040D12 !important;
             -webkit-text-fill-color: #040D12 !important;
         }
+
+        /* Style for the download button */
         .stDownloadButton > button {
             background-color: #00A9FF;
             color: #FFFFFF;
@@ -49,6 +53,7 @@ def apply_custom_styling():
         </style>
     """, unsafe_allow_html=True)
 
+# Apply the custom styling at the start of the app
 apply_custom_styling()
 
 # --- FILE AND CONFIGURATION CONSTANTS ---
@@ -58,9 +63,16 @@ FONT_PATH = "PhotographSignature.ttf"
 # --- CORE IMAGE PROCESSING FUNCTION ---
 def create_poster(user_image_file, user_name, photo_scale, photo_pos_x, photo_pos_y, photo_rotation, name_font_size):
     poster_template = Image.open(POSTER_PATH).convert("RGBA")
-    user_photo = Image.open(user_image_file).convert("RGBA")
+    user_photo = Image.open(user_image_file)
+
+    # Normalize image orientation based on EXIF data
+    user_photo = ImageOps.exif_transpose(user_photo)
+    
+    user_photo = user_photo.convert("RGBA")
+    
     canvas = Image.new("RGBA", poster_template.size)
     
+    # Rotate the photo before resizing
     if photo_rotation != 0:
         user_photo = user_photo.rotate(photo_rotation, resample=Image.Resampling.LANCZOS, expand=True)
     
@@ -101,7 +113,8 @@ with st.sidebar:
     photo_scale = st.number_input("Zoom Photo", min_value=0.5, max_value=4.0, value=1.0, step=0.1)
     photo_pos_x = st.number_input("Move Photo Left/Right", min_value=-400, max_value=400, value=150, step=10)
     photo_pos_y = st.number_input("Move Photo Up/Down", min_value=-400, max_value=400, value=0, step=10)
-    photo_rotation = st.number_input("Rotate Photo (°)", min_value=-180, max_value=180, value=0, step=5)
+    # --- THIS LINE IS CHANGED ---
+    photo_rotation = st.number_input("Rotate Photo (°)", min_value=0, max_value=360, value=0, step=5)
 
     st.header("3. Name Controls")
     name_font_size = st.number_input("Font Size", min_value=40, max_value=200, value=100, step=5)
