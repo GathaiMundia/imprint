@@ -61,12 +61,20 @@ POSTER_PATH = "Attending 2025.png"
 FONT_PATH = "PhotographSignature.ttf"
 
 # --- CORE IMAGE PROCESSING FUNCTION ---
-def create_poster(user_image_file, user_name, photo_scale, photo_pos_x, photo_pos_y, name_font_size):
+# The function now accepts a 'photo_rotation' argument
+def create_poster(user_image_file, user_name, photo_scale, photo_pos_x, photo_pos_y, photo_rotation, name_font_size):
     poster_template = Image.open(POSTER_PATH).convert("RGBA")
     user_photo = Image.open(user_image_file).convert("RGBA")
     canvas = Image.new("RGBA", poster_template.size)
     
+    # --- NEW: Rotate the photo before resizing ---
+    # The 'expand=True' flag ensures the image is not cropped during rotation.
+    if photo_rotation != 0:
+        user_photo = user_photo.rotate(photo_rotation, resample=Image.LANCZOS, expand=True)
+    # ---------------------------------------------
+        
     base_photo_width = 530
+    # Adjust aspect ratio calculation in case the image was expanded by rotation
     aspect_ratio = user_photo.height / user_photo.width
     new_width = int(base_photo_width * photo_scale)
     new_height = int(new_width * aspect_ratio)
@@ -75,7 +83,7 @@ def create_poster(user_image_file, user_name, photo_scale, photo_pos_x, photo_po
     photo_paste_x = (canvas.width // 2) - (new_width // 2) + photo_pos_x
     photo_paste_y = 455 - (new_height // 2) + photo_pos_y
     
-    canvas.paste(user_photo, (photo_paste_x, photo_paste_y))
+    canvas.paste(user_photo, (photo_paste_x, photo_paste_y), user_photo) # Use photo's alpha channel for pasting
     canvas.paste(poster_template, (0, 0), poster_template)
 
     draw = ImageDraw.Draw(canvas)
@@ -85,7 +93,6 @@ def create_poster(user_image_file, user_name, photo_scale, photo_pos_x, photo_po
         st.warning("Custom font not found. Using default.")
         font = ImageFont.load_default(size=60)
     
-    # Draw text with fixed position and black color
     draw.text((540, 870), user_name, font=font, fill="#000000", anchor="ms")
 
     return canvas
@@ -102,8 +109,11 @@ with st.sidebar:
 
     st.header("2. Photo Controls")
     photo_scale = st.number_input("Zoom Photo", min_value=0.5, max_value=4.0, value=1.0, step=0.1)
-    photo_pos_x = st.number_input("Move Photo Left/Right", min_value=-400, max_value=400, value=150, step=10) # <-- Default value changed
+    photo_pos_x = st.number_input("Move Photo Left/Right", min_value=-400, max_value=400, value=150, step=10)
     photo_pos_y = st.number_input("Move Photo Up/Down", min_value=-400, max_value=400, value=0, step=10)
+    # --- NEW: Rotation control ---
+    photo_rotation = st.number_input("Rotate Photo (°)", min_value=-180, max_value=180, value=0, step=5)
+    # ----------------------------
 
     st.header("3. Name Controls")
     name_font_size = st.number_input("Font Size", min_value=40, max_value=200, value=100, step=5)
@@ -116,6 +126,7 @@ if user_upload and user_name:
         photo_scale=photo_scale,
         photo_pos_x=photo_pos_x,
         photo_pos_y=photo_pos_y,
+        photo_rotation=photo_rotation, # Pass the new rotation value
         name_font_size=name_font_size
     )
     
