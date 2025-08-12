@@ -21,8 +21,6 @@ def apply_custom_styling():
         html, body, [class*="st-"], .st-emotion-cache-16txtl3 {
             font-family: 'Lexend Deca', sans-serif;
         }
-
-        /* Style for all input widgets for high contrast */
         .st-emotion-cache-1j6s6b6, .st-emotion-cache-1x0xh3b {
             background-color: #ECF2FF;
             border-radius: 8px;
@@ -31,8 +29,6 @@ def apply_custom_styling():
             color: #040D12 !important;
             -webkit-text-fill-color: #040D12 !important;
         }
-
-        /* Style for the download button */
         .stDownloadButton > button {
             background-color: #00A9FF;
             color: #FFFFFF;
@@ -53,7 +49,6 @@ def apply_custom_styling():
         </style>
     """, unsafe_allow_html=True)
 
-# Apply the custom styling at the start of the app
 apply_custom_styling()
 
 # --- FILE AND CONFIGURATION CONSTANTS ---
@@ -66,9 +61,7 @@ def create_poster(user_image_file, user_name, photo_scale, photo_pos_x, photo_po
     user_photo = Image.open(user_image_file).convert("RGBA")
     canvas = Image.new("RGBA", poster_template.size)
     
-    # Rotate the photo before resizing
     if photo_rotation != 0:
-        # --- THIS LINE IS CORRECTED ---
         user_photo = user_photo.rotate(photo_rotation, resample=Image.Resampling.LANCZOS, expand=True)
     
     base_photo_width = 530
@@ -140,4 +133,3 @@ if user_upload and user_name:
 else:
     st.info("⬅️ Start by uploading your photo and name in the sidebar.")
     st.image(POSTER_PATH, caption="Poster Template", use_container_width=True)
-
